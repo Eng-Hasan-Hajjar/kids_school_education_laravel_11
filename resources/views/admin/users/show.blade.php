@@ -6,12 +6,17 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">User Details</div>
-
                 <div class="card-body">
+                    <p><strong>Profile Image:</strong>
+                        @if($user->profile_image)
+                            <img src="{{ asset($user->profile_image) }}" width="200" alt="Profile Image">
+                        @else
+                            N/A
+                        @endif
+                    </p>
                     <p><strong>Name:</strong> {{ $user->name }}</p>
                     <p><strong>Email:</strong> {{ $user->email }}</p>
                     <p><strong>Role:</strong> {{ $user->roles->pluck('name')->first() }}</p>
-
                     <a href="{{ route('users.index') }}" class="btn btn-primary">Back to Users</a>
                 </div>
             </div>

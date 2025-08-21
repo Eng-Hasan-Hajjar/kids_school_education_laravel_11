@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('answers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('question_id')->constrained('questions');
+             $table->foreignId('question_id')->constrained('questions');
             $table->string('Answer_Text');
             $table->boolean('Iscorrect');
             $table->string('sound')->nullable();

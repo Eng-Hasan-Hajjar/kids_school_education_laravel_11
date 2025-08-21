@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('contents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lesson_id')->constrained('lessons');
-              $table->string('sound')->nullable();
+            $table->string('sound')->nullable();
             $table->string('image')->nullable();
             $table->string('Text');
 

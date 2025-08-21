@@ -10,7 +10,7 @@
             </div>
         @endif
 
-        <form action="{{ route('answers.store') }}" method="POST">
+        <form action="{{ route('answers.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="form-group mb-3">
                 <label for="question_id">Question</label>
@@ -42,15 +42,15 @@
                 @enderror
             </div>
             <div class="form-group mb-3">
-                <label for="sound">Sound (Path)</label>
-                <input type="text" name="sound" id="sound" class="form-control @error('sound') is-invalid @enderror" value="{{ old('sound') }}">
+                <label for="sound">Sound</label>
+                <input type="file" name="sound" id="sound" class="form-control @error('sound') is-invalid @enderror" accept="audio/*">
                 @error('sound')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
             <div class="form-group mb-3">
-                <label for="image">Image (Path)</label>
-                <input type="text" name="image" id="image" class="form-control @error('image') is-invalid @enderror" value="{{ old('image') }}">
+                <label for="image">Image</label>
+                <input type="file" name="image" id="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
                 @error('image')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

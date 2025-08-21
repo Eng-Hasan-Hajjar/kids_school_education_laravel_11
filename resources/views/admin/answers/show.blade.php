@@ -8,8 +8,23 @@
                 <p><strong>Question:</strong> {{ $answer->question->Question_Text ?? 'N/A' }}</p>
                 <p><strong>Text:</strong> {{ $answer->Answer_Text }}</p>
                 <p><strong>Is Correct:</strong> {{ $answer->Iscorrect ? 'Yes' : 'No' }}</p>
-                <p><strong>Sound:</strong> {{ $answer->sound ?? 'N/A' }}</p>
-                <p><strong>Image:</strong> {{ $answer->image ?? 'N/A' }}</p>
+                <p><strong>Sound:</strong> 
+                    @if($answer->sound)
+                        <audio controls>
+                            <source src="{{ asset($answer->sound) }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    @else 
+                        N/A 
+                    @endif
+                </p>
+                <p><strong>Image:</strong> 
+                    @if($answer->image)
+                        <img src="{{ asset($answer->image) }}" width="300" alt="Image">
+                    @else 
+                        N/A 
+                    @endif
+                </p>
                 <p><strong>Created At:</strong> {{ $answer->created_at->format('d/m/Y H:i') }}</p>
                 <p><strong>Updated At:</strong> {{ $answer->updated_at->format('d/m/Y H:i') }}</p>
             </div>

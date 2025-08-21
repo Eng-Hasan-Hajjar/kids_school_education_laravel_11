@@ -6,8 +6,23 @@
         <div class="card">
             <div class="card-body">
                 <p><strong>Lesson:</strong> {{ $content->lesson->Lesson_Title ?? 'N/A' }}</p>
-                <p><strong>Sound:</strong> {{ $content->sound ?? 'N/A' }}</p>
-                <p><strong>Image:</strong> {{ $content->image ?? 'N/A' }}</p>
+                <p><strong>Sound:</strong> 
+                    @if($content->sound)
+                        <audio controls>
+                            <source src="{{ asset($content->sound) }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    @else 
+                        N/A 
+                    @endif
+                </p>
+                <p><strong>Image:</strong> 
+                    @if($content->image)
+                        <img src="{{ asset($content->image) }}" width="300" alt="Image">
+                    @else 
+                        N/A 
+                    @endif
+                </p>
                 <p><strong>Text:</strong> {{ $content->Text }}</p>
                 <p><strong>Created At:</strong> {{ $content->created_at->format('d/m/Y H:i') }}</p>
                 <p><strong>Updated At:</strong> {{ $content->updated_at->format('d/m/Y H:i') }}</p>

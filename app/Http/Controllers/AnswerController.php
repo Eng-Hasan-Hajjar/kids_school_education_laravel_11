@@ -27,8 +27,8 @@ class AnswerController extends Controller
             'question_id' => 'required|exists:questions,id',
             'Answer_Text' => 'required|string',
             'Iscorrect' => 'required|boolean',
-            'sound' => 'nullable|string|max:255',
-            'image' => 'nullable|string|max:255',
+            'sound' => 'nullable|mimes:mp3,wav,ogg,m4a|max:10240',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'question_id.required' => 'The question field is required.',
             'question_id.exists' => 'The selected question is invalid.',
@@ -36,14 +36,28 @@ class AnswerController extends Controller
             'Answer_Text.string' => 'The answer text must be a string.',
             'Iscorrect.required' => 'The correct status is required.',
             'Iscorrect.boolean' => 'The correct status must be true or false.',
-            'sound.string' => 'The sound must be a string.',
-            'sound.max' => 'The sound path must not exceed 255 characters.',
-            'image.string' => 'The image must be a string.',
-            'image.max' => 'The image path must not exceed 255 characters.',
+            'sound.mimes' => 'The sound must be an audio file of type: mp3, wav, ogg, m4a.',
+            'sound.max' => 'The sound file must not exceed 10MB.',
+            'image.image' => 'The image must be an image file.',
+            'image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif.',
+            'image.max' => 'The image file must not exceed 2MB.',
         ]);
 
         try {
             Log::info('Attempting to create answer', ['data' => $validatedData]);
+
+            if ($request->hasFile('image')) {
+                $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->getClientOriginalExtension();
+                $request->file('image')->move(public_path('uploads/images'), $imageName);
+                $validatedData['image'] = 'uploads/images/' . $imageName;
+            }
+
+            if ($request->hasFile('sound')) {
+                $soundName = time() . '_' . uniqid() . '.' . $request->file('sound')->getClientOriginalExtension();
+                $request->file('sound')->move(public_path('uploads/audios'), $soundName);
+                $validatedData['sound'] = 'uploads/audios/' . $soundName;
+            }
+
             $answer = Answer::create($validatedData);
             Log::info('Answer created successfully', ['answer_id' => $answer->id]);
             return redirect()->route('answers.index')->with('success', 'Answer created successfully.');
@@ -71,8 +85,8 @@ class AnswerController extends Controller
             'question_id' => 'required|exists:questions,id',
             'Answer_Text' => 'required|string',
             'Iscorrect' => 'required|boolean',
-            'sound' => 'nullable|string|max:255',
-            'image' => 'nullable|string|max:255',
+            'sound' => 'nullable|mimes:mp3,wav,ogg,m4a|max:10240',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'question_id.required' => 'The question field is required.',
             'question_id.exists' => 'The selected question is invalid.',
@@ -80,14 +94,34 @@ class AnswerController extends Controller
             'Answer_Text.string' => 'The answer text must be a string.',
             'Iscorrect.required' => 'The correct status is required.',
             'Iscorrect.boolean' => 'The correct status must be true or false.',
-            'sound.string' => 'The sound must be a string.',
-            'sound.max' => 'The sound path must not exceed 255 characters.',
-            'image.string' => 'The image must be a string.',
-            'image.max' => 'The image path must not exceed 255 characters.',
+            'sound.mimes' => 'The sound must be an audio file of type: mp3, wav, ogg, m4a.',
+            'sound.max' => 'The sound file must not exceed 10MB.',
+            'image.image' => 'The image must be an image file.',
+            'image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif.',
+            'image.max' => 'The image file must not exceed 2MB.',
         ]);
 
         try {
             Log::info('Attempting to update answer', ['answer_id' => $answer->id, 'data' => $validatedData]);
+
+            if ($request->hasFile('image')) {
+                if ($answer->image && file_exists(public_path($answer->image))) {
+                    unlink(public_path($answer->image));
+                }
+                $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->getClientOriginalExtension();
+                $request->file('image')->move(public_path('uploads/images'), $imageName);
+                $validatedData['image'] = 'uploads/images/' . $imageName;
+            }
+
+            if ($request->hasFile('sound')) {
+                if ($answer->sound && file_exists(public_path($answer->sound))) {
+                    unlink(public_path($answer->sound));
+                }
+                $soundName = time() . '_' . uniqid() . '.' . $request->file('sound')->getClientOriginalExtension();
+                $request->file('sound')->move(public_path('uploads/audios'), $soundName);
+                $validatedData['sound'] = 'uploads/audios/' . $soundName;
+            }
+
             $answer->update($validatedData);
             Log::info('Answer updated successfully', ['answer_id' => $answer->id]);
             return redirect()->route('answers.index')->with('success', 'Answer updated successfully.');
@@ -101,6 +135,15 @@ class AnswerController extends Controller
     {
         try {
             Log::info('Attempting to delete answer', ['answer_id' => $answer->id]);
+
+            if ($answer->image && file_exists(public_path($answer->image))) {
+                unlink(public_path($answer->image));
+            }
+
+            if ($answer->sound && file_exists(public_path($answer->sound))) {
+                unlink(public_path($answer->sound));
+            }
+
             $answer->delete();
             Log::info('Answer deleted successfully', ['answer_id' => $answer->id]);
             return redirect()->route('answers.index')->with('success', 'Answer deleted successfully.');

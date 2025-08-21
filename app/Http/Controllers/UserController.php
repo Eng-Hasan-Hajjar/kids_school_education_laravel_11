@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 
 class UserController extends Controller
 {
@@ -40,7 +41,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|exists:roles,name',
+            'role' => 'nullable|exists:roles,name', // جعل الدور اختياريًا
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'profile_image.image' => 'The profile image must be an image file.',
@@ -51,25 +52,36 @@ class UserController extends Controller
         try {
             Log::info('Attempting to create user', ['data' => $validated]);
 
+            $profileImagePath = null;
             if ($request->hasFile('profile_image')) {
+                // إنشاء المجلد إذا لم يكن موجودًا
+                $storagePath = public_path('uploads/images');
+                if (!File::isDirectory($storagePath)) {
+                    File::makeDirectory($storagePath, 0755, true);
+                }
+
+                // تخزين الصورة باستخدام move
                 $imageName = time() . '_' . uniqid() . '.' . $request->file('profile_image')->getClientOriginalExtension();
-                $request->file('profile_image')->move(public_path('uploads/images'), $imageName);
-                $validated['profile_image'] = 'uploads/images/' . $imageName;
+                $request->file('profile_image')->move($storagePath, $imageName);
+                $profileImagePath = 'uploads/images/' . $imageName;
             }
 
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => bcrypt($validated['password']),
-                'profile_image' => $validated['profile_image'] ?? null,
+                'profile_image' => $profileImagePath,
             ]);
 
-            $role = Role::where('name', $validated['role'])->first();
-            if ($role) {
-                $user->roles()->sync([$role->id]);
+            // السماح لنموذج User بتعيين الدور الافتراضي 'user' تلقائيًا
+            if (!empty($validated['role'])) {
+                $role = Role::where('name', $validated['role'])->first();
+                if ($role) {
+                    $user->roles()->sync([$role->id]);
+                }
             }
 
-            Log::info('User created successfully', ['user_id' => $user->id]);
+            Log::info('User created successfully', ['user_id' => $user->id, 'profile_image' => $profileImagePath]);
             return redirect()->route('users.index')->with('success', 'User created and role assigned successfully.');
         } catch (\Illuminate\Database\QueryException $e) {
             Log::error('Failed to create user', ['error' => $e->getMessage(), 'data' => $validated]);
@@ -90,7 +102,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|exists:roles,name',
+            'role' => 'nullable|exists:roles,name', // جعل الدور اختياريًا
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'profile_image.image' => 'The profile image must be an image file.',
@@ -104,11 +116,20 @@ class UserController extends Controller
             $user = User::findOrFail($id);
 
             if ($request->hasFile('profile_image')) {
-                if ($user->profile_image && file_exists(public_path($user->profile_image))) {
-                    unlink(public_path($user->profile_image));
+                // حذف الصورة القديمة إذا وجدت
+                if ($user->profile_image && File::exists(public_path($user->profile_image))) {
+                    File::delete(public_path($user->profile_image));
                 }
+
+                // إنشاء المجلد إذا لم يكن موجودًا
+                $storagePath = public_path('uploads/images');
+                if (!File::isDirectory($storagePath)) {
+                    File::makeDirectory($storagePath, 0755, true);
+                }
+
+                // تخزين الصورة الجديدة
                 $imageName = time() . '_' . uniqid() . '.' . $request->file('profile_image')->getClientOriginalExtension();
-                $request->file('profile_image')->move(public_path('uploads/images'), $imageName);
+                $request->file('profile_image')->move($storagePath, $imageName);
                 $validated['profile_image'] = 'uploads/images/' . $imageName;
             }
 
@@ -119,12 +140,14 @@ class UserController extends Controller
                 'profile_image' => $validated['profile_image'] ?? $user->profile_image,
             ]);
 
-            $role = Role::where('name', $validated['role'])->first();
-            if ($role) {
-                $user->roles()->sync([$role->id]);
+            if (!empty($validated['role'])) {
+                $role = Role::where('name', $validated['role'])->first();
+                if ($role) {
+                    $user->roles()->sync([$role->id]);
+                }
             }
 
-            Log::info('User updated successfully', ['user_id' => $user->id]);
+            Log::info('User updated successfully', ['user_id' => $user->id, 'profile_image' => $validated['profile_image']]);
             return redirect()->route('users.index')->with('success', 'User updated and role changed successfully.');
         } catch (\Illuminate\Database\QueryException $e) {
             Log::error('Failed to update user', ['user_id' => $id, 'error' => $e->getMessage(), 'data' => $validated]);
@@ -143,8 +166,8 @@ class UserController extends Controller
                 return redirect()->route('users.index')->with('error', 'Cannot delete an ADMIN user.');
             }
 
-            if ($user->profile_image && file_exists(public_path($user->profile_image))) {
-                unlink(public_path($user->profile_image));
+            if ($user->profile_image && File::exists(public_path($user->profile_image))) {
+                File::delete(public_path($user->profile_image));
             }
 
             $user->delete();

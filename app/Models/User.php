@@ -7,15 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use App\Models\Permission;
 use App\Models\Role;
-
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable ;
-   
+    use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -27,7 +24,8 @@ class User extends Authenticatable
         'email',
         'password',
         'visit_count',
-         'profile_image', 'payment_receipt',
+        'profile_image',
+        'payment_receipt',
     ];
 
     /**
@@ -53,19 +51,20 @@ class User extends Authenticatable
         ];
     }
 
-
-        /**
+    /**
      * العلاقة بين المستخدمين والأدوار
      */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
     }
+
     public function hasRole($roleName)
     {
         return $this->roles->contains('name', $roleName);
     }
-       /**
+
+    /**
      * تعيين دور للمستخدم
      */
     public function assignRole($roleName)
@@ -75,7 +74,6 @@ class User extends Authenticatable
             $this->roles()->syncWithoutDetaching([$role->id]); // يضيف الدور فقط إن لم يكن موجودًا
         }
     }
-    
 
     /**
      * إزالة دور من المستخدم
@@ -87,16 +85,16 @@ class User extends Authenticatable
             $this->roles()->detach($role->id);
         }
     }
-    
 
     /**
-     * التحقق مما إذا كان المستخدم لديه دور معين
-     
-    public function hasRole($roleName): bool
+     * Bootstrap the model by assigning the default 'user' role.
+     */
+    protected static function boot()
     {
-        return $this->roles->contains('name', $roleName);
+        parent::boot();
+
+        static::created(function ($user) {
+            $user->assignRole('user');
+        });
     }
-    */
-
-
 }

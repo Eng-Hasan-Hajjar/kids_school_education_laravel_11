@@ -40,14 +40,12 @@ class RegisteredUserController extends Controller
 
         // رفع الصور إذا تم توفيرها
         $profileImagePath = $request->hasFile('profile_image') 
-        ? $request->file('profile_image')->store('users/profile_images', 'public') 
-        : null;
+            ? $request->file('profile_image')->store('users/profile_images', 'public') 
+            : null;
 
         $paymentReceiptPath = $request->hasFile('payment_receipt') 
-        ? $request->file('payment_receipt')->store('users/payment_receipts', 'public') 
-        : null;
-
-
+            ? $request->file('payment_receipt')->store('users/payment_receipts', 'public') 
+            : null;
 
         $user = User::create([
             'name' => $request->name,
@@ -56,12 +54,6 @@ class RegisteredUserController extends Controller
             'profile_image' => $profileImagePath,
             'payment_receipt' => $paymentReceiptPath,
         ]);
-        
-        // تعيين الدور الافتراضي "user"
-        $defaultRole = Role::where('name', 'user')->first();
-        if ($defaultRole) {
-            $user->roles()->attach($defaultRole->id);
-        }
 
         event(new Registered($user));
         Auth::login($user);
@@ -71,13 +63,8 @@ class RegisteredUserController extends Controller
 
         if ($userRoleId == 3) {
             return redirect(route('indexproperty', absolute: false));
-        }
-        else{
+        } else {
             return redirect(route('dashboard', absolute: false));
         }
-
-
-
-
     }
 }

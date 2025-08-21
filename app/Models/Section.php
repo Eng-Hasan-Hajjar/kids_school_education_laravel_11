@@ -17,4 +17,11 @@ class Section extends Model
     {
         return $this->belongsToMany(User::class, 'user_section');
     }
+
+
+
+    public function lessons()
+    {
+        return $this->hasManyThrough(Lesson::class, Unit::class);
+    }
 }
